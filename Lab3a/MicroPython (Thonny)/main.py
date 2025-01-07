@@ -14,13 +14,10 @@ import motor    # motor, motor driver module
 # WRITE YOUR CODE HERE to create a motor object and enable the motor
 # driver on motor A (see motor.py comments)
 
-
-
 print('MOTOR INITIALIZED.') 
 
 # 2. WRITE YOUR CODE HERE to creaze the encoder object and zero the encoder.
 # (see encoder.py comments)
-
 
 
 print('ENCODER INITIALIZED.')

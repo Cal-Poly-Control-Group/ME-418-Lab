@@ -56,8 +56,8 @@ while utime.ticks_diff(utime.ticks_us(), start_time) <= TEST_TIME_US:
 
 
     # Use a "if" statement to maintain the constant sampling rate. You will
-    # need to compare the time difference between current time "t" and
-    # next sampling time "next_time" using the "utime.ticks_diff" function.
+    # need to compare the time difference between current_time and
+    # next_sampling_time using the "utime.ticks_diff" function.
     # If the difference is positive, then enough time has passed and data
     # should be collected.
     # WRITE YOUR CODE HERE to maintain sampling rate with an if-statement.

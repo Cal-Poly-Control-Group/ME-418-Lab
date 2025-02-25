@@ -40,7 +40,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     times = []
     vals = []
-    for t, val in sweep_gen(100, 1, 10, 1, 300):
+    for t, val in sweep_gen(100, 1, 10, 2, 300):
         times.append(t)
         vals.append(val)
     plt.plot(times, vals)

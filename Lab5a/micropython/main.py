@@ -36,10 +36,10 @@ next_time_us = utime.ticks_us() + period_us
 
 
 # Generates the sine sweep profile
-swepp_profile = sweep_gen(amplitude, f_start, f_end, interval, points)
+sweep_profile = sweep_gen(amplitude, f_start, f_end, interval, points)
 
 # Main loop. t and percent are the outputs of the sine sweep generator.
-for t, percent in swepp_profile:
+for t, volt_percent in sweep_profile:
     # WRITE YOUR CODE HERE to set the percent voltage on the motor
 
 

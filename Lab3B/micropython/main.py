@@ -1,4 +1,4 @@
-import array
+import cqueue
 import utime
 import pyb
 import encoder
@@ -33,11 +33,11 @@ encoder.zero()
 
 # This code creates arrays for time, velocity data, and control command data.
 # Units should be microseconds, rad/s, and percent voltage
-time_array = array.array('f')
-vel_array = array.array('f')
-percent_array = array.array('f')
-p_array = array.array('f')
-i_array = array.array('f')
+time_queue = cqueue.FloatQueue(1000)
+vel_queue = cqueue.FloatQueue(1000)
+percent_queue = cqueue.FloatQueue(1000)
+p_queue = cqueue.FloatQueue(1000)
+i_queue = cqueue.FloatQueue(1000)
 
 # This sets up variables used to run the timed loop at 500Hz. Units are
 # microseconds for all variables ending in _us
@@ -91,9 +91,9 @@ while utime.ticks_diff(utime.ticks_us(), start_time_us) <= test_time_us:
 
             
             # Store the time for this run in the time array.
-            time_array.append(delta_t * n_runs)
+            time_queue.put(delta_t * n_runs)
             # WRITE YOUR CODE HERE to append the values to the other arrays.
-            vel_array.append(vel)
+            vel_queue.put(vel)
 
 
         # Increment the counter for number of runs.
@@ -105,7 +105,8 @@ driver.motorA.set_voltage_percent(0)
 
 # 3. MICROCONTROLLER -> PC COMMUNICATION (TEST DATA).
 # This code prints the data to the computer.
-for i in range(len(time_array)):
-    print(time_array[i], vel_array[i], percent_array[i], p_array[i], i_array[i],
-          sep=',')
+while time_queue.any():
+    print(time_queue.get(), vel_queue.get(), percent_queue.get(),
+          p_queue.get(), i_queue.get(), sep=',')
+    utime.sleep_ms(1) # constant printing can cause errors in Thonny
 print('END')

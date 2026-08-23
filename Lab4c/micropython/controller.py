@@ -49,15 +49,13 @@ class PIController:
         self.kp = kp
         self.ki = ki
     
-    # WRITE YOUR CODE HERE to define set_setpoint. Follow the same pattern as
-    # set_gains uses.
+    # Set the controller setpoint. This method is provided for Lab 4C.
     def set_setpoint(self, sp):
         self.sp = sp
 
     
-    # WRITE YOUR CODE HERE to define the method run which will
-    # take in the velocity of the motor and return the percent
-    # voltage to set the motor to.
+    # Run the controller using the measured velocity and return the motor
+    # voltage percentage. This method is provided for Lab 4C.
     def run(self, x):
         ''' Runs the PI controller once.
 

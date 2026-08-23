@@ -1,104 +1,172 @@
+"""Lab 5B starter code: closed-loop pendulum position control."""
+
+import sys
 import cqueue
 import utime
 import pyb
 import encoder
 import motor
 import controller
-###############################################################################
-# 1. PC -> MICROCONTROLLER COMMUNICATION (PARAMETER VALUES).
-# This code reads values from the serial port for gains, position to step to,
-# and total time to run the test for. No need to modify anything.
-while True:
-    try:
-        kp = float(input("kp: [voltage percent per rad of error]: "))
-        ki = float(input("ki: [voltage percent per rad-s of integral]: "))
-        kd = float(input("kd: [voltage percent per rad/s of derivative]: "))
-        sp = float(input("Position setpoint to step to [rad]: "))
-        out_max = float(input("Maximum motor voltage [percent]: "))
-        t_total = float(input("Total test time [ms]: "))
-    except ValueError:
-        print("Invalid input")
-        continue
-    else:
-        break
+import filters
 
-###############################################################################
-# 2. OBJECT/VARIABLE SETUP
-# This code sets up motor driver and encoder objects (same as lab 1A).
+
+# -----------------------------------------------------------------------------
+# Hardware and controller timing — provided code; do not modify.
+# -----------------------------------------------------------------------------
+
 driver = motor.MotorDriver()
-driver.motorA.enable()
+enc = encoder.Encoder(4, pyb.Pin.cpu.B6, pyb.Pin.cpu.B7)
 
-encoder = encoder.Encoder(4, pyb.Pin.cpu.B6, pyb.Pin.cpu.B7)
-encoder.zero()
+# The controller runs at approximately 150 Hz. Keep this period fixed.
+PERIOD_US = 6667
+DELTA_T_S = PERIOD_US / 1e6
+MAX_RECORDED_POINTS = 600
+FILTER_CUTOFF_HZ = 20
 
-# This code creates queues for time, position data, and control command data.
-# Units should be microseconds, rad/s, and percent voltage
-time_queue = cqueue.FloatQueue(1000)
-pos_queue = cqueue.FloatQueue(1000)
-percent_queue = cqueue.FloatQueue(1000)
-p_queue = cqueue.FloatQueue(1000)
-i_queue = cqueue.FloatQueue(1000)
-d_queue = cqueue.FloatQueue(1000)
-
-# This sets up variables used to run the timed loop at 250Hz. Units are
-# microseconds for all variables ending in _us
-period_us = 5000
-
-test_time_us =  int(t_total * 1000)
-start_time_us = utime.ticks_us()
-next_time_us = start_time_us
-delta_t = period_us / 1e6 # convert microseconds to seconds
-
-# This determines how often to collect data. The desired number of data
-# points for a graph is about 500-1000. The variable 'every' controls how
-# many controller runs happen for each data point, for example, data is
-# collected every 5 runs, 10 runs, etc.
-every = test_time_us // (period_us * 500)
-every = 1 if every == 0 else every
-n_runs = 0
-
-###############################################################################
-# WRITE YOUR CODE HERE to create the PID controller object. Use the parameters
-# collected from the serial port in the above section.
+print("READY LAB5B_SERIAL_V1")
 
 
-###############################################################################
-# 3. CLOSED LOOP STEP RESPONSE
-# WRITE YOUR CODE HERE to set the position setpoint to the value read from the
-# serial port.
+# Keep waiting for commands until the board is stopped or reset.
+while True:
+    line = sys.stdin.readline().strip()
+
+    if line == "":
+        continue
+
+    print("ACK")
+    parts = line.split()
+
+    if parts[0].upper() == "RUN_PID" and len(parts) == 7:
+        # ---------------------------------------------------------------------
+        # Read experiment parameters — provided code; do not modify.
+        # ---------------------------------------------------------------------
+
+        kp = float(parts[1])
+        ki = float(parts[2])
+        kd = float(parts[3])
+        setpoint_rad = float(parts[4])
+        test_time_s = float(parts[5])
+        output_limit_percent = float(parts[6])
+
+        print("OK")
+
+        # ---------------------------------------------------------------------
+        # Set up this experiment.
+        # ---------------------------------------------------------------------
+
+        # TODO 1: Create a PIDController using the received gains, output
+        # limit, and the provided DELTA_T_S.
 
 
-# The next 3 lines are responsible for running the timed loop.
-while utime.ticks_diff(utime.ticks_us(), start_time_us) <= test_time_us:
-    if utime.ticks_diff(utime.ticks_us(), next_time_us) >= 0:
-        next_time_us = utime.ticks_add(next_time_us, period_us)
-        # Any code written here will be run at 250Hz maximum.
-        # Read the current time in microseconds,
-        # and the current position in rad/
-        t = n_runs * delta_t
-        pos = encoder.get_position_rad()
+        # The experiment starts with the pendulum position defined as zero.
+        # For the initial unfiltered tests, initialize last_error to the
+        # corresponding initial error. This prevents an artificial derivative
+        # spike at the first controller update.
+        last_error = setpoint_rad
 
-        # Run the controller and set the resulting voltage percent on the motor.
-        percent = controller.run(pos)
-        driver.motorA.set_voltage_percent(percent)
-        
-        if n_runs % every == 0:
-            # Data collection 
-            p_part, i_part, d_part = controller.get_PID_actions()
-            # This stores the data in the queues
-            time_queue.put(t)
-            pos_queue.put(pos)
-            percent_queue.put(percent)
-            p_queue.put(p_part)
-            i_queue.put(i_part)
-            d_queue.put(d_part)
+        # FILTERED PD MODIFICATION (complete only when instructed in the manual):
+        # Replace the unfiltered derivative state above with a FirstOrderLowPass
+        # object and a state variable for the previous filtered error. Initialize
+        # both using the initial position error. The filter constructor takes the
+        # cutoff frequency, controller period, and initial filter output.
 
-        n_runs += 1
-    
-# Stop the motor
-driver.motorA.disable()
-# Print the data as CSV
-while time_queue.any():
-    print(time_queue.get(), pos_queue.get(), percent_queue.get(),
-    p_queue.get(), i_queue.get(), d_queue.get(), sep=',')
-print('END')
+        test_time_us = int(test_time_s * 1e6)
+        total_updates = int(test_time_s / DELTA_T_S) + 1
+        record_every = (
+            total_updates + MAX_RECORDED_POINTS - 1
+        ) // MAX_RECORDED_POINTS
+        record_every = 1 if record_every == 0 else record_every
+
+        time_queue = cqueue.FloatQueue(MAX_RECORDED_POINTS + 2)
+        position_queue = cqueue.FloatQueue(MAX_RECORDED_POINTS + 2)
+        output_queue = cqueue.FloatQueue(MAX_RECORDED_POINTS + 2)
+        p_queue = cqueue.FloatQueue(MAX_RECORDED_POINTS + 2)
+        i_queue = cqueue.FloatQueue(MAX_RECORDED_POINTS + 2)
+        d_queue = cqueue.FloatQueue(MAX_RECORDED_POINTS + 2)
+
+        driver.motorA.set_voltage_percent(0)
+        driver.motorA.enable()
+        enc.zero()
+
+        start_time_us = utime.ticks_us()
+        next_time_us = start_time_us
+        update_count = 0
+
+        # ---------------------------------------------------------------------
+        # Closed-loop step-response experiment.
+        # ---------------------------------------------------------------------
+
+        while utime.ticks_diff(utime.ticks_us(), start_time_us) <= test_time_us:
+            if utime.ticks_diff(utime.ticks_us(), next_time_us) >= 0:
+                next_time_us = utime.ticks_add(next_time_us, PERIOD_US)
+
+                time_s = update_count * DELTA_T_S
+                position_rad = enc.get_position_rad()
+
+                # TODO 2: Calculate the position error.
+
+
+                # TODO 3: Use a finite difference to calculate error_rate.
+                # Then store the current error in last_error for the next
+                # controller update.
+
+                # FILTERED PD MODIFICATION:
+                # Replace the raw finite-difference calculation with these steps:
+                #   1. Pass the current error through the low-pass filter.
+                #   2. Calculate the rate from the current and previous filtered
+                #      errors using a finite difference.
+                #   3. Save the current filtered error for the next update.
+
+
+                # TODO 4: Run the controller using error and error_rate.
+                # For the filtered PD tests, pass the unfiltered error and the
+                # filtered error rate so that only the D action is filtered.
+
+
+                # TODO 5: Apply the returned voltage percentage to motor A.
+
+
+                if update_count % record_every == 0:
+                    # Data collection - provided code; do not modify.
+                    p_action, i_action, d_action = (
+                        pid_controller.get_PID_actions()
+                    )
+
+                    time_queue.put(time_s)
+                    position_queue.put(position_rad)
+                    output_queue.put(output_percent)
+                    p_queue.put(p_action)
+                    i_queue.put(i_action)
+                    d_queue.put(d_action)
+
+
+                update_count += 1
+
+        # Stop the motor after every experiment — provided code; do not modify.
+        driver.motorA.set_voltage_percent(0)
+        driver.motorA.disable()
+
+        # ---------------------------------------------------------------------
+        # Send data to the PC — provided code; do not modify.
+        # ---------------------------------------------------------------------
+
+        while time_queue.any():
+            print(
+                "DATA",
+                time_queue.get(),
+                position_queue.get(),
+                output_queue.get(),
+                p_queue.get(),
+                i_queue.get(),
+                d_queue.get(),
+                sep=",",
+            )
+            utime.sleep_ms(1)
+
+    else:
+        print(
+            "ERR usage: RUN_PID "
+            "<kp> <ki> <kd> <setpoint_rad> <test_time_s> <output_limit>"
+        )
+
+    print("END")

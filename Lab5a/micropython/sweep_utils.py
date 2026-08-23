@@ -1,48 +1,53 @@
-import math       
-def sweep_gen(amplitude, f_1, f_2, interval, n_steps):
-    ''' Generate a sine sweep. Each run through the loop yields a value to
-    be sent to the input of the system. The frequency increases linearly.
-    See: https://en.wikipedia.org/wiki/Chirp
-    
-    Args:
-        amplitude: The amplitude of all the waves in the generated sweep.
-        f_1:   The lowest frequency to use in the sweep.
-        f_2:     The highest frequency to use in the sweep.
-        interval:  The amount of time that the sweep should take.
-        n_steps:   The total amount of data points to generate for the sweep.
-        
-        
-    Returns:
-        Tuples of of time and the value of the sweep function.
-        This is a generator, so the tuples are yielded one at a time.
-        
-        
-    Typical Usage Example:
-        from sweep_utils import sweep_gen
-        for t, val in sweep_gen(100, 1, 10, 1, 100):
-            # Print time and value as csv for later plotting
-            print(t, val, sep=',')
-    '''
-    for i in range(n_steps):
-        # WRITE YOUR CODE HERE to find the time for this step.
-        # t = 
-        # WRITE YOUR CODE HERE to calculate the phase of the sweep.
-        # (the input to the sine function).
-        # phi = 
-        # WRITE YOUR CODE HERE to calculate the value of the sweep input.
-        # Store the result in the sweep variable.
-        # sweep = 
-        # Yield the tuple of time and the sweep value.
-        yield (t, sweep)
+"""Utilities for generating the Lab 5A linear sine sweep."""
 
-#unit test
-if __name__ == '__main__':
+import math
+
+
+def sweep_gen(amplitude, f_start_hz, f_end_hz, sweep_time_s, number_of_points):
+    """Yield time and sine-sweep values one sample at a time.
+
+    The instantaneous frequency increases linearly from f_start_hz to
+    f_end_hz during sweep_time_s.
+
+    Args:
+        amplitude: Peak amplitude of the generated sweep.
+        f_start_hz: Starting frequency in Hz.
+        f_end_hz: Ending frequency in Hz.
+        sweep_time_s: Total sweep time in seconds.
+        number_of_points: Total number of samples in the sweep.
+
+    Yields:
+        Tuples containing time in seconds and the corresponding sweep value.
+    """
+
+    for index in range(number_of_points):
+        # TODO 1: Calculate the time for this sample and store it in time_s.
+
+
+        # TODO 2: Calculate the sine-wave phase in radians and store it in
+        # phase_rad. Use the linear-frequency sweep equation from the manual.
+
+
+        # TODO 3: Calculate the sweep value and store it in sweep_value.
+
+
+        yield time_s, sweep_value
+
+
+# Run this file with Local Python 3 to check the completed generator.
+if __name__ == "__main__":
     import matplotlib.pyplot as plt
+
     times = []
-    vals = []
-    for t, val in sweep_gen(100, 1, 10, 2, 300):
-        times.append(t)
-        vals.append(val)
-    plt.plot(times, vals)
+    values = []
+
+    for time_s, sweep_value in sweep_gen(100, 1, 10, 2, 300):
+        times.append(time_s)
+        values.append(sweep_value)
+
+    plt.plot(times, values)
+    plt.xlabel("Time [s]")
+    plt.ylabel("Sweep value")
+    plt.title("Sine Sweep: 1–10 Hz")
+    plt.tight_layout()
     plt.show()
-    

@@ -30,7 +30,7 @@ class MotorDriver:
     created, corresponding with the A and B motor connections.
 
     Attributes:
-        motorA: 
+        motorA:
             Motor object for the motor connected to the A terminals on the
             driver boad. See Motor class in same file for details.
         motorB:

@@ -1,16 +1,17 @@
-"""Lab 4B starter code: closed-loop PI-controller experiment."""
+"""Lab 4B starter code: trapezoidal velocity-profile tracking."""
 
 import sys
 import cqueue
-import utime
-import pyb
-import encoder
 import motor
+import encoder
+import pyb
+import utime
 import controller
+from profile import trapz_profile_gen, trapz_profile_length
 
 
 # -----------------------------------------------------------------------------
-# Hardware initialization — provided code; do not modify.
+# Hardware and controller constants — provided code; do not modify.
 # -----------------------------------------------------------------------------
 
 driver = motor.MotorDriver()
@@ -18,7 +19,7 @@ enc = encoder.Encoder(4, pyb.Pin.cpu.B6, pyb.Pin.cpu.B7)
 
 PERIOD_US = 2000
 DELTA_T_S = PERIOD_US / 1e6
-QUEUE_CAPACITY = 1000
+OUTPUT_LIMIT_PERCENT = 100
 
 print("READY LAB4B_SERIAL_V1")
 
@@ -33,16 +34,17 @@ while True:
     print("ACK")
     parts = line.split()
 
-    if parts[0].upper() == "RUN_CONTROLLER" and len(parts) == 6:
+    if parts[0].upper() == "RUN_PROFILE" and len(parts) == 7:
         # ---------------------------------------------------------------------
         # Read experiment parameters — provided code; do not modify.
         # ---------------------------------------------------------------------
 
-        kp = float(parts[1])
-        ki = float(parts[2])
-        setpoint_rad_s = float(parts[3])
-        output_limit_percent = float(parts[4])
-        test_time_ms = float(parts[5])
+        omega_ss_rad_s = float(parts[1])
+        steady_time_s = float(parts[2])
+        acceleration_time_s = float(parts[3])
+        stop_time_s = float(parts[4])
+        kp = float(parts[5])
+        ki = float(parts[6])
 
         print("OK")
 
@@ -50,75 +52,66 @@ while True:
         # Set up this experiment — provided code; do not modify.
         # ---------------------------------------------------------------------
 
-        test_time_us = int(test_time_ms * 1000)
+        data_points = trapz_profile_length(
+            omega_ss_rad_s,
+            acceleration_time_s,
+            steady_time_s,
+            stop_time_s,
+            DELTA_T_S,
+        )
 
-        time_queue = cqueue.FloatQueue(QUEUE_CAPACITY)
-        velocity_queue = cqueue.FloatQueue(QUEUE_CAPACITY)
-        output_queue = cqueue.FloatQueue(QUEUE_CAPACITY)
-        p_queue = cqueue.FloatQueue(QUEUE_CAPACITY)
-        i_queue = cqueue.FloatQueue(QUEUE_CAPACITY)
+        time_queue = cqueue.FloatQueue(data_points)
+        setpoint_queue = cqueue.FloatQueue(data_points)
+        velocity_queue = cqueue.FloatQueue(data_points)
 
-        # Store approximately 500 points, even during a longer experiment.
-        store_every = test_time_us // (PERIOD_US * 500)
-        if store_every < 1:
-            store_every = 1
+        con = controller.PIController(
+            kp,
+            ki,
+            OUTPUT_LIMIT_PERCENT,
+            DELTA_T_S,
+            0,
+        )
 
         driver.motorA.enable()
         enc.zero()
 
-        # ---------------------------------------------------------------------
-        # Configure the PI controller.
-        # ---------------------------------------------------------------------
+        next_time_us = utime.ticks_add(utime.ticks_us(), PERIOD_US)
 
-        # TODO 1: Create a PIController object. Initialize its gains and
-        # setpoint to zero. Use output_limit_percent and DELTA_T_S for the
-        # output limit and controller period.
-
-
-        # TODO 2: Set the proportional and integral gains using kp and ki.
-
-
-        # TODO 3: Set the velocity setpoint using setpoint_rad_s.
-
+        profile = trapz_profile_gen(
+            omega_ss_rad_s,
+            acceleration_time_s,
+            steady_time_s,
+            stop_time_s,
+            DELTA_T_S,
+        )
 
         # ---------------------------------------------------------------------
-        # Closed-loop step-response experiment.
+        # Profile-tracking experiment.
         # ---------------------------------------------------------------------
 
-        start_time_us = utime.ticks_us()
-        next_time_us = start_time_us
-        n_runs = 0
+        for time_s, setpoint_rad_s in profile:
+            velocity_rad_s = enc.get_velocity_rad()
 
-        while utime.ticks_diff(
-            utime.ticks_us(), start_time_us
-        ) <= test_time_us:
-            current_time_us = utime.ticks_us()
-
-            if utime.ticks_diff(current_time_us, next_time_us) >= 0:
-                next_time_us = utime.ticks_add(next_time_us, PERIOD_US)
-
-                velocity_rad_s = enc.get_velocity_rad()
-
-                # TODO 4: Run the controller using the measured velocity and
-                # store the returned voltage percentage.
+            # TODO 1: Update the controller setpoint using setpoint_rad_s.
 
 
-                # TODO 5: Apply the controller output to motor A.
+            # TODO 2: Run the controller using velocity_rad_s and store the
+            # returned motor-voltage percentage.
 
 
-                if n_runs % store_every == 0:
-                    # TODO 6: Get the proportional and integral actions from
-                    # the controller.
+            # TODO 3: Apply the controller output to motor A.
 
 
-                    time_queue.put(DELTA_T_S * n_runs)
-                    velocity_queue.put(velocity_rad_s)
-
-                    # TODO 7: Store the total, proportional, and integral
-                    # controller outputs in their queues.
+            # TODO 4: Store time_s, setpoint_rad_s, and velocity_rad_s in
+            # their provided queues.
 
 
-                n_runs += 1
+            # Maintain the 500 Hz controller period — provided code;
+            # do not modify.
+            while utime.ticks_diff(utime.ticks_us(), next_time_us) < 0:
+                pass
+
+            next_time_us = utime.ticks_add(next_time_us, PERIOD_US)
 
         # Stop the motor after every experiment — provided code; do not modify.
         driver.motorA.set_voltage_percent(0)
@@ -132,18 +125,17 @@ while True:
             print(
                 "DATA",
                 time_queue.get(),
+                setpoint_queue.get(),
                 velocity_queue.get(),
-                output_queue.get(),
-                p_queue.get(),
-                i_queue.get(),
                 sep=",",
             )
             utime.sleep_ms(1)
 
     else:
         print(
-            "ERR usage: RUN_CONTROLLER "
-            "<kp> <ki> <setpoint> <output_limit> <test_time_ms>"
+            "ERR usage: RUN_PROFILE "
+            "<omega_ss> <steady_time> <acceleration_time> "
+            "<stop_time> <kp> <ki>"
         )
 
     print("END")

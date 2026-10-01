@@ -1,4 +1,4 @@
-"""Lab 4A starter code: open-loop motor step-response test."""
+"""Lab 3B starter code: open-loop motor step-response test."""
 
 import sys       # receive commands from the PC
 import cqueue    # store test data in queues
@@ -34,7 +34,7 @@ SAMPLING_PERIOD_US = 2000       # 500 Hz sampling rate
 TEST_TIME_US = 1_500_000        # 1.5 s test duration
 DATA_POINTS = TEST_TIME_US // SAMPLING_PERIOD_US
 
-print("READY LAB4A_SERIAL_V1")
+print("READY LAB3B_SERIAL_V1")
 
 
 # Keep waiting for commands until the board is stopped or reset.

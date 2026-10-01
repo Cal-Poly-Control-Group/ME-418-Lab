@@ -2,8 +2,6 @@
 
 Typical usage example:
     # Create encoder object
-    import encoder
-    import pyb # needed for next line
     enc = encoder.Encoder(4, pyb.Pin.cpu.B6, pyb.Pin.cpu.B7)
     # Zero out encoder
     enc.zero()
@@ -42,7 +40,7 @@ class Encoder:
         self.delta = 0
         self._time = utime.ticks_us()
         self._last_time = self._time
-        
+
     def update(self):
         """Updates the variables necessary to track position and velocity.
 
@@ -52,10 +50,10 @@ class Encoder:
         32-bits. PERIOD is set to the maximum for a 16-bit timer by default, so
         this should work with all timers. This corresponds with 32768 counts
         maximum before update() must be called again.
-            
+
         The last position and last time are also stored, which is necessary
         to read velocity estimates from the encoder.
-            
+
         The methods get_position() and get_velocity() will both call this
         method, but if these are not called often enough on their own,
         this method should be called as often as described above.
@@ -64,7 +62,7 @@ class Encoder:
         self._count = self._timer.counter()
         self._last_time = self._time
         self._time = utime.ticks_us()
-        
+
         delta_pos = self._count - self._last_count
         delta_t = self._time - self._last_time
 
@@ -76,12 +74,12 @@ class Encoder:
         self._last_position = self._position
         self._position += delta_pos
         self._velocity = delta_pos / delta_t * 1e6 # microseconds to seconds
-        
-        
-    
+
+
+
     def get_position(self):
         """Updates the encoder and returns its position, in counts.
-        
+
         Returns:
             The encoder position, in counts. See the encoder specifications for
             the number of counts per revolution. For quadrature encoders, there
@@ -89,10 +87,10 @@ class Encoder:
         """
         self.update()
         return self._position
-    
+
     def set_position(self, new_position):
         """"Sets a new position of the encoder.
-        
+
         This can be useful for synchronizing the encoder with something else.
         This will also reset the last positions and times used to calculate
         velocity, to avoid reporting incorrect velocities.
@@ -103,7 +101,7 @@ class Encoder:
         self._last_position = new_position
         self._time = utime.ticks_us()
         self._last_time = self._time
-        
+
     def zero(self):
         """Sets the position of the encoder to zero.
 
@@ -115,25 +113,26 @@ class Encoder:
         self._last_position = 0
         self._time = utime.ticks_us()
         self._last_time = self._time
-        
+
     def get_velocity(self):
         """Updates the encoder and returns its velocity, in counts per second.
-        
+
         If the encoder has moved since the last time update() was called, then
         the velocity estimate differ from expcted as this returns the average
         velocity over the span of time between update() calls.
-        
+
         Returns:
             The encoder velocity, in counts per second.
         """
         self.update()
         return self._velocity
-    
+
     def counts_to_rad(self, counts):
+        # Students convert
         return counts * 2 * math.pi / (CPR * 4)
-    
+
     def get_position_rad(self):
         return self.counts_to_rad(self.get_position())
-    
+
     def get_velocity_rad(self):
         return self.counts_to_rad(self.get_velocity())

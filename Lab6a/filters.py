@@ -1,10 +1,10 @@
-"""Provided first-order digital low-pass filter for Lab 5B."""
+"""Provided first-order digital low-pass filter for Lab 6A."""
 
 import math
 
 
 class FirstOrderLowPass:
-    """Implement the first-order low-pass update derived in Lab 3B."""
+    """Implement the first-order low-pass update derived in Lab 5B."""
 
     def __init__(self, cutoff_hz, delta_t, initial_value=0.0):
         """Initialize the filter.

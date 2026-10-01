@@ -1,4 +1,4 @@
-"""PID controller class for Lab 5B."""
+"""PID controller class for Lab 6A."""
 
 
 class PIDController:

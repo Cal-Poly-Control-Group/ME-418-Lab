@@ -1,4 +1,4 @@
-"""Provided plotting and continuous-simulation helpers for ME 418 Lab 3B.
+"""Provided plotting and continuous-simulation helpers for ME 418 Lab 5B.
 
 Students do not need to modify this file. The notebook keeps the required
 engineering calculations visible while this module handles implementation

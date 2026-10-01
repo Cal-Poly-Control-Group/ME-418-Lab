@@ -1,4 +1,4 @@
-"""Lab 5B starter code: closed-loop pendulum position control."""
+"""Lab 6A starter code: closed-loop pendulum position control."""
 
 import sys
 import cqueue
@@ -23,7 +23,7 @@ DELTA_T_S = PERIOD_US / 1e6
 MAX_RECORDED_POINTS = 600
 FILTER_CUTOFF_HZ = 20
 
-print("READY LAB5B_SERIAL_V1")
+print("READY LAB6A_SERIAL_V1")
 
 
 # Keep waiting for commands until the board is stopped or reset.

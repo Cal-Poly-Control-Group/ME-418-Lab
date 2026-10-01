@@ -9,7 +9,6 @@ Included in MotorDriver are two Motor objects for the motor connections
 A and B, as labeled on the board.
 
 Typical usage example:
-    import motor
     # Create a MotorDriver object
     driver = motor.MotorDriver()
     # Enable motor A
@@ -21,6 +20,7 @@ Typical usage example:
 import pyb
 import time
 
+
 class MotorDriver:
     """Driver for the IHM04A1 DC motor driver Nucleo expansion board.
 
@@ -30,7 +30,7 @@ class MotorDriver:
     created, corresponding with the A and B motor connections.
 
     Attributes:
-        motorA: 
+        motorA:
             Motor object for the motor connected to the A terminals on the
             driver boad. See Motor class in same file for details.
         motorB:
@@ -111,5 +111,4 @@ class Motor:
     def disable(self):
         """Disables the motor.
         """
-        self.set_voltage_percent(0)
         self._en_pin.low()

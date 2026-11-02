@@ -108,7 +108,7 @@ def plot_candidate_frequency_responses(
     max_interference_ratio,
 ):
     """Compare candidate low-pass responses against two design requirements."""
-    frequency_hz = np.linspace(0.0, 30.0, 800)
+    frequency_hz = np.geomspace(0.1, 30.0, 800)
     signal_limit_db = 20.0 * np.log10(min_signal_ratio)
     interference_limit_db = 20.0 * np.log10(max_interference_ratio)
 
@@ -179,14 +179,14 @@ def plot_candidate_frequency_responses(
     axis.annotate(
         "candidate point must lie above this marker",
         xy=(signal_frequency_hz, signal_limit_db),
-        xytext=(3.7, -4.8),
+        xytext=(0.15, -6.5),
         arrowprops={"arrowstyle": "->", "color": "0.3"},
         fontsize=9,
     )
     axis.annotate(
         "candidate point must lie below this marker",
         xy=(interference_frequency_hz, interference_limit_db),
-        xytext=(12.0, -17.0),
+        xytext=(1.0, -15.0),
         arrowprops={"arrowstyle": "->", "color": "0.3"},
         fontsize=9,
     )
@@ -194,7 +194,8 @@ def plot_candidate_frequency_responses(
     axis.set_xlabel("Frequency (Hz)")
     axis.set_ylabel("Magnitude (dB)")
     axis.set_title("Candidate first-order low-pass filters")
-    axis.set_xlim(0.0, 30.0)
+    axis.set_xscale("log")
+    axis.set_xlim(0.1, 30.0)
     axis.set_ylim(-25.0, 1.0)
     axis.legend(loc="lower left", fontsize=9)
     fig.tight_layout()

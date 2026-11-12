@@ -7,7 +7,6 @@ import pyb
 import encoder
 import motor
 import controller
-import filters
 
 
 # -----------------------------------------------------------------------------
@@ -21,7 +20,6 @@ enc = encoder.Encoder(4, pyb.Pin.cpu.B6, pyb.Pin.cpu.B7)
 PERIOD_US = 6667
 DELTA_T_S = PERIOD_US / 1e6
 MAX_RECORDED_POINTS = 600
-FILTER_CUTOFF_HZ = 20
 
 print("READY LAB6A_SERIAL_V1")
 
@@ -58,17 +56,10 @@ while True:
         # limit, and the provided DELTA_T_S.
 
 
-        # The experiment starts with the pendulum position defined as zero.
-        # For the initial unfiltered tests, initialize last_error to the
-        # corresponding initial error. This prevents an artificial derivative
-        # spike at the first controller update.
-        last_error = setpoint_rad
-
-        # FILTERED PD MODIFICATION (complete only when instructed in the manual):
-        # Replace the unfiltered derivative state above with a FirstOrderLowPass
-        # object and a state variable for the previous filtered error. Initialize
-        # both using the initial position error. The filter constructor takes the
-        # cutoff frequency, controller period, and initial filter output.
+        # Skip filtering during the initial P and PD tests. After saving an
+        # unfiltered PD response in Section 6A.3.3, go to Section 6A.3.4
+        # (PD Control with First-Order Low-Pass Filtering) and complete the
+        # FILTERED PD MODIFICATION comments in controller.py.
 
         test_time_us = int(test_time_s * 1e6)
         total_updates = int(test_time_s / DELTA_T_S) + 1
@@ -106,24 +97,11 @@ while True:
                 # TODO 2: Calculate the position error.
 
 
-                # TODO 3: Use a finite difference to calculate error_rate.
-                # Then store the current error in last_error for the next
-                # controller update.
-
-                # FILTERED PD MODIFICATION:
-                # Replace the raw finite-difference calculation with these steps:
-                #   1. Pass the current error through the low-pass filter.
-                #   2. Calculate the rate from the current and previous filtered
-                #      errors using a finite difference.
-                #   3. Save the current filtered error for the next update.
+                # TODO 3: Call pid_controller.run(error) and store the returned
+                # voltage percentage in output_percent.
 
 
-                # TODO 4: Run the controller using error and error_rate.
-                # For the filtered PD tests, pass the unfiltered error and the
-                # filtered error rate so that only the D action is filtered.
-
-
-                # TODO 5: Apply the returned voltage percentage to motor A.
+                # TODO 4: Apply output_percent to motor A.
 
 
                 if update_count % record_every == 0:

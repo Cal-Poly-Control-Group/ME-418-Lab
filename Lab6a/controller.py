@@ -11,34 +11,44 @@ class PIDController:
         self._i_action = 0.0
         self._d_action = 0.0
 
-        # The fixed period and accumulated error are set up for you.
+        # The fixed period, accumulated error, and previous error are provided.
         self.delta_t = delta_t
         self._integral = 0.0
+        self._last_error = None
 
         # TODO 1: Store the three gains and output limit as instance
         # attributes.
 
-    def run(self, error, error_rate):
-        """Run the PID calculation once and return voltage percentage.
+        # FILTERED PD MODIFICATION (Section 6A.3.4, PD Control with
+        # First-Order Low-Pass Filtering): Skip this during the P and unfiltered
+        # PD tests. After saving your unfiltered PD response in Section 6A.3.3,
+        # import FirstOrderLowPass from filters at the top of this file and
+        # create one filter per controller here using the cutoff and delta_t.
 
-        Args:
-            error: Current position error in radians.
-            error_rate: Current rate of position error in radians per second.
-        """
+    def run(self, error):
+        """Calculate the voltage percentage from the position error in radians."""
 
         # TODO 2: Add the current rectangular area to the accumulated error.
 
 
-        # TODO 3: Calculate and store the P, I, and D actions.
+        # TODO 3: Calculate error_rate using the current error, the previous
+        # error, and delta_t. Use zero on the first call, when _last_error is
+        # None. Save the current error in _last_error for the next call.
+
+        # FILTERED PD MODIFICATION (Section 6A.3.4): After adding the filter
+        # in the constructor, pass error_rate to its filter() method once per
+        # update. Use the returned rate for D and keep using error for P and I.
+
+        # TODO 4: Calculate and store the P, I, and D actions.
 
 
-        # TODO 4: Add the three actions to obtain the controller output.
+        # TODO 5: Add the three actions to obtain the controller output.
 
 
-        # TODO 5: Limit the output to the range [-out_max, out_max].
+        # TODO 6: Limit the output to the range [-out_max, out_max].
 
 
-        # TODO 6: Return the limited output.
+        # TODO 7: Return the limited output.
 
 
     def get_PID_actions(self):
@@ -63,12 +73,8 @@ if __name__ == "__main__":
     errors = np.linspace(0, 1, len(times_s))
     errors += 2 * np.pi / 4000 * np.sin(150 * times_s)
 
-    last_error = errors[0]
-
     for error in errors:
-        error_rate = (error - last_error) / delta_t
-        last_error = error
-        con.run(error, error_rate)
+        con.run(error)
         p_action, i_action, d_action = con.get_PID_actions()
         p_actions.append(p_action)
         i_actions.append(i_action)

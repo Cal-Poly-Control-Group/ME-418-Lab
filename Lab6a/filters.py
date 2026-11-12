@@ -1,5 +1,8 @@
 """Provided first-order digital low-pass filter for Lab 6A."""
 
+# Use this class in controller.py in Section 6A.3.4 (PD Control with
+# First-Order Low-Pass Filtering), after completing the unfiltered PD tests.
+
 import math
 
 

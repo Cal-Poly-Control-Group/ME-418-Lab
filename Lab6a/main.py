@@ -53,7 +53,7 @@ while True:
         # ---------------------------------------------------------------------
 
         # TODO 1: Create a PIDController using the received gains, output
-        # limit, and the provided DELTA_T_S.
+        # limit, the provided DELTA_T_S, and the received setpoint_rad.
 
 
         # Skip filtering during the initial P and PD tests. After saving an
@@ -94,14 +94,11 @@ while True:
                 time_s = update_count * DELTA_T_S
                 position_rad = enc.get_position_rad()
 
-                # TODO 2: Calculate the position error.
+                # TODO 2: Pass position_rad to pid_controller.run() and
+                # store the returned voltage percentage in output_percent.
 
 
-                # TODO 3: Call pid_controller.run(error) and store the returned
-                # voltage percentage in output_percent.
-
-
-                # TODO 4: Apply output_percent to motor A.
+                # TODO 3: Apply output_percent to motor A.
 
 
                 if update_count % record_every == 0:

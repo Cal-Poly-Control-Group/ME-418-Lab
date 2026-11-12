@@ -4,17 +4,18 @@
 class PIDController:
     """A proportional-integral-derivative controller."""
 
-    def __init__(self, kp, ki, kd, out_max, delta_t):
+    def __init__(self, kp, ki, kd, out_max, delta_t, setpoint_rad):
         # Use these variables for the controller actions so that
         # get_PID_actions() works properly.
         self._p_action = 0.0
         self._i_action = 0.0
         self._d_action = 0.0
 
-        # The fixed period, accumulated error, and previous error are provided.
+        # The encoder starts at zero, so the initial error is the setpoint.
         self.delta_t = delta_t
+        self.setpoint_rad = setpoint_rad
         self._integral = 0.0
-        self._last_error = None
+        self._last_error = setpoint_rad
 
         # TODO 1: Store the three gains and output limit as instance
         # attributes.
@@ -25,15 +26,15 @@ class PIDController:
         # import FirstOrderLowPass from filters at the top of this file and
         # create one filter per controller here using the cutoff and delta_t.
 
-    def run(self, error):
-        """Calculate the voltage percentage from the position error in radians."""
+    def run(self, position_rad):
+        """Calculate the voltage percentage from the measured position in radians."""
 
-        # TODO 2: Add the current rectangular area to the accumulated error.
+        # TODO 2: Calculate the position error as the setpoint minus the
+        # measured position. Add its rectangular area to the accumulated error.
 
 
-        # TODO 3: Calculate error_rate using the current error, the previous
-        # error, and delta_t. Use zero on the first call, when _last_error is
-        # None. Save the current error in _last_error for the next call.
+        # TODO 3: Calculate error_rate using the current error, _last_error,
+        # and delta_t. Save the current error in _last_error for the next call.
 
         # FILTERED PD MODIFICATION (Section 6A.3.4): After adding the filter
         # in the constructor, pass error_rate to its filter() method once per
@@ -64,17 +65,17 @@ if __name__ == "__main__":
     from matplotlib import pyplot as plt
 
     delta_t = 0.005
-    con = PIDController(1, 1, 1, 100, delta_t)
+    con = PIDController(1, 1, 1, 100, delta_t, setpoint_rad=0.0)
 
     p_actions = []
     i_actions = []
     d_actions = []
     times_s = np.arange(0, 1, delta_t)
-    errors = np.linspace(0, 1, len(times_s))
-    errors += 2 * np.pi / 4000 * np.sin(150 * times_s)
+    positions_rad = np.linspace(0, -1, len(times_s))
+    positions_rad -= 2 * np.pi / 4000 * np.sin(150 * times_s)
 
-    for error in errors:
-        con.run(error)
+    for position_rad in positions_rad:
+        con.run(position_rad)
         p_action, i_action, d_action = con.get_PID_actions()
         p_actions.append(p_action)
         i_actions.append(i_action)

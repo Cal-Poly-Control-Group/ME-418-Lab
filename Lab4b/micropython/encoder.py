@@ -64,7 +64,7 @@ class Encoder:
         self._time = utime.ticks_us()
 
         delta_pos = self._count - self._last_count
-        delta_t = self._time - self._last_time
+        delta_t = utime.ticks_diff(self._time, self._last_time)
 
         if delta_pos > PERIOD // 2: # Underflow
             delta_pos -= PERIOD
@@ -73,7 +73,7 @@ class Encoder:
 
         self._last_position = self._position
         self._position += delta_pos
-        self._velocity = delta_pos / delta_t * 1e6 # microseconds to seconds
+        self._velocity = delta_pos / delta_t * 1e6 if delta_t > 0 else 0.0
 
 
 
@@ -97,8 +97,12 @@ class Encoder:
         Args:
             new_position: What the position of the encoder should change to.
         """
+        # Start counting from the shaft position at the time of the reset.
+        self._count = self._timer.counter()
+        self._last_count = self._count
         self._position = new_position
         self._last_position = new_position
+        self._velocity = 0.0
         self._time = utime.ticks_us()
         self._last_time = self._time
 
@@ -109,10 +113,7 @@ class Encoder:
         This will also reset the last positions and times used to calculate
         velocity, to avoid reporting incorrect velocities.
         """
-        self._position = 0
-        self._last_position = 0
-        self._time = utime.ticks_us()
-        self._last_time = self._time
+        self.set_position(0)
 
     def get_velocity(self):
         """Updates the encoder and returns its velocity, in counts per second.

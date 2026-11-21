@@ -132,6 +132,10 @@ class Encoder:
         # Students convert
         return counts * 2 * math.pi / (CPR * 4)
     
+    def rad_to_counts(self, rad):
+        """Converts an angle in radians to encoder counts."""
+        return CPR * 4 * rad / (2 * math.pi)
+
     def get_position_rad(self):
         return self.counts_to_rad(self.get_position())
     
